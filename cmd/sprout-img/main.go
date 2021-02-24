@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -78,7 +77,6 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 	sub, err := reddit.Get(subreddits, 100)
 	if err != nil {
 		log.Println(err)
-		continue
 	}
 
 	count = 0
