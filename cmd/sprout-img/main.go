@@ -11,6 +11,7 @@ import (
 )
 
 var count int
+var status string
 
 type Data struct {
 	categories []internal.PImageCategory
@@ -53,6 +54,8 @@ func getConfig() *sprout.Config {
 }
 
 func handleResponse(w http.ResponseWriter, r *http.Request) {
+  status = "EMPTY"
+
 	database, err := internal.CreateDb("db_config.json")
 	if err != nil {
 		panic(err)
@@ -76,6 +79,7 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 
 	sub, err := reddit.Get(subreddits, 100)
 	if err != nil {
+    status = "ERROR NO VALUE FROM SPROUT"
 		log.Println(err)
 	}
 
@@ -106,16 +110,13 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 			}
+      status = "OK"
 		}
 	}
 
 	result := Response{}
 	w.Header().Set("Content-Type", "application/json")
-	if count != 0 {
-		result.Status = "400 OK"
-	} else {
-		result.Status = "200 ERROR"
-	}
+  result.Status = status
 
 	result.Count = count
 	json, err := json.Marshal(result)
