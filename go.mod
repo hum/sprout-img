@@ -1,4 +1,4 @@
-module github.com/hum/sprout
+module github.com/hum/sprout-img
 
 go 1.15
 

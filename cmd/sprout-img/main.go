@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hum/sprout/internal"
+	"github.com/hum/sprout-img/internal"
 	"github.com/turnage/graw/reddit"
 )
 
