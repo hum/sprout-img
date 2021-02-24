@@ -2,12 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
+	"os"
 
+	"github.com/hum/sprout"
 	"github.com/hum/sprout-img/internal"
-	"github.com/turnage/graw/reddit"
 )
 
 var count int
@@ -42,6 +43,16 @@ func getData(db *internal.Database) (*Data, error) {
 	}, nil
 }
 
+func getConfig() *sprout.Config {
+	return &sprout.Config{
+		Username:     os.Getenv("REDDIT_USERNAME"),
+		Password:     os.Getenv("REDDIT_PASSWORD"),
+		UserAgent:    os.Getenv("REDDIT_USER_AGENT"),
+		ClientID:     os.Getenv("REDDIT_CLIENT_ID"),
+		ClientSecret: os.Getenv("REDDIT_CLIENT_SECRET"),
+	}
+}
+
 func handleResponse(w http.ResponseWriter, r *http.Request) {
 	database, err := internal.CreateDb("db_config.json")
 	if err != nil {
@@ -54,29 +65,28 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	bot, err := reddit.NewBotFromAgentFile("image.agent", 0)
+	subreddits := make([]string, len(data.categories))
+	for _, c := range data.categories {
+		subreddits = append(subreddits, c.CategoryName)
+	}
+
+	sprout := sprout.New()
+	reddit := sprout.Reddit()
+	reddit.UseAPI = true
+	reddit.Conf = getConfig()
+
+	sub, err := reddit.Get(subreddits, 100)
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		continue
 	}
 
 	count = 0
 	for _, category := range data.categories {
-		log.Printf("Fetching image links from: %s\n", category.CategoryName)
-
-		harvest, err := bot.Listing("/r/"+category.CategoryName, "")
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		for _, post := range harvest.Posts {
-			if strings.Contains(post.URL, "/comments/") {
-				continue
-			}
-
+		for _, post := range sub[category.CategoryName].Posts {
 			image := &internal.PImages{
 				CategoryID: category.CategoryID,
-				Link:       post.URL,
+				Link:       post.Link,
 			}
 
 			_, err := database.Conn.Model(image).Insert()
