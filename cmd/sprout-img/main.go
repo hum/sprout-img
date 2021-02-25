@@ -43,18 +43,8 @@ func getData(db *internal.Database) (*Data, error) {
 	}, nil
 }
 
-func getConfig() *sprout.Config {
-	return &sprout.Config{
-		Username:     os.Getenv("REDDIT_USERNAME"),
-		Password:     os.Getenv("REDDIT_PASSWORD"),
-		UserAgent:    os.Getenv("REDDIT_USER_AGENT"),
-		ClientID:     os.Getenv("REDDIT_CLIENT_ID"),
-		ClientSecret: os.Getenv("REDDIT_CLIENT_SECRET"),
-	}
-}
-
 func handleResponse(w http.ResponseWriter, r *http.Request) {
-  status = "EMPTY"
+	status = "EMPTY"
 
 	database, err := internal.CreateDb("db_config.json")
 	if err != nil {
@@ -67,33 +57,34 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	subreddits := make([]string, len(data.categories))
-	for _, c := range data.categories {
-		subreddits = append(subreddits, c.CategoryName)
-	}
-
-	sprout := sprout.New()
-	reddit := sprout.Reddit()
+	s := sprout.New()
+	reddit := s.Reddit()
 	reddit.UseAPI = true
-	reddit.Conf = getConfig()
 
-	sub, err := reddit.Get(subreddits, 100)
-	if err != nil {
-    status = "ERROR NO VALUE FROM SPROUT"
-		log.Println(err)
+	reddit.Conf = &sprout.Config{
+		Username:     os.Getenv("REDDIT_USERNAME"),
+		Password:     os.Getenv("REDDIT_PASSWORD"),
+		UserAgent:    os.Getenv("REDDIT_USER_AGENT"),
+		ClientID:     os.Getenv("REDDIT_CLIENT_ID"),
+		ClientSecret: os.Getenv("REDDIT_CLIENT_SECRET"),
 	}
 
 	count = 0
-	for _, category := range data.categories {
-		for _, post := range sub[category.CategoryName].Posts {
+	for _, c := range data.categories {
+		result, err := reddit.Get(c.CategoryName, 100)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		for _, post := range result.Posts {
 			image := &internal.PImages{
-				CategoryID: category.CategoryID,
+				CategoryID: c.CategoryID,
 				Link:       post.Link,
 			}
 
 			_, err := database.Conn.Model(image).Insert()
 			if err != nil {
-				log.Printf("Error inserting data into DB: %v\n", err)
 				continue
 			}
 			count++
@@ -106,24 +97,22 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 
 				_, err := database.Conn.Model(serverImage).Insert()
 				if err != nil {
-					log.Printf("Error inserting data into DB: %v\n", err)
 					continue
 				}
 			}
-      status = "OK"
+			status = "OK"
 		}
 	}
 
-	result := Response{}
+	response := Response{}
 	w.Header().Set("Content-Type", "application/json")
-  result.Status = status
+	response.Status = status
 
-	result.Count = count
-	json, err := json.Marshal(result)
+	response.Count = count
+	json, err := json.Marshal(response)
 	if err != nil {
 		log.Printf("Error marshaling data %v\n", err)
 	}
-
 	w.Write(json)
 }
 
