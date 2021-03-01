@@ -23,6 +23,10 @@ type Response struct {
 	Status string
 }
 
+/*func handleWebhook(w http.ResponseWriter, r *http.Request) {
+
+}*/
+
 func getData(db *internal.Database) (*Data, error) {
 	var categories []internal.PImageCategory
 	var servers []internal.PServers
@@ -69,6 +73,10 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 		ClientSecret: os.Getenv("REDDIT_CLIENT_SECRET"),
 	}
 
+	/*
+	  TODO:
+	  Handle concurrently
+	*/
 	count = 0
 	for _, c := range data.categories {
 		result, err := reddit.Get(c.CategoryName, 100)
@@ -118,5 +126,13 @@ func handleResponse(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", handleResponse)
+
+	/*
+	  TODO:
+	  Serve as HTTPS -- generate private SSL cert and key -- to be able to handle webhooks
+
+	  http.HandleFunc("/wh", handleWebhook)
+	*/
+
 	http.ListenAndServe(":3000", nil)
 }
