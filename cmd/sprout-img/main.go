@@ -23,9 +23,22 @@ type Response struct {
 	Status string
 }
 
-/*func handleWebhook(w http.ResponseWriter, r *http.Request) {
+func handleWebhook(w http.ResponseWriter, r *http.Request) {
+	/*
+	  TODO:
+	  Currently only handle for Twitch specific actions
 
-}*/
+	  Handle event registration, cancellation and restart
+	  Create structs to match responses
+
+	  Params:
+	    ~/wh?action=[action]&id=[id]
+	      • action: type of action to perform on the specific webhook
+	        -> add/remove/check
+	      • id: user id that identifies the webhook
+	*/
+	return
+}
 
 func getData(db *internal.Database) (*Data, error) {
 	var categories []internal.PImageCategory
