@@ -115,11 +115,11 @@ func HandleImageCollection(w http.ResponseWriter, r *http.Request) {
 	response := Response{
 		Status: status,
 		Data:   map[string]string{"Count": strconv.Itoa(count)},
-    /*
-    TODO:
-    Possibly add more data to return?
-    E.g. Return what source collected what amount of images
-    */
+		/*
+		   TODO:
+		   Possibly add more data to return?
+		   E.g. Return what source collected what amount of images
+		*/
 	}
 
 	err = setHeader(w, map[string]string{"Content-Type": "application/json"})
