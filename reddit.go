@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+var databaseHandler *internal.DatabaseHandler
+
 type imageData struct {
 	categories []internal.PImageCategory
 	servers    []internal.PServers
@@ -35,6 +37,9 @@ func getData(db *internal.Database) (*imageData, error) {
 }
 
 func HandleImageCollection(w http.ResponseWriter, r *http.Request) {
+  if databaseHandler == nil {
+    databaseHandler = &internal.DatabaseHandler{}
+  }
 	// Only supports Reddit for now
 	status := DEFAULT
 
@@ -42,14 +47,15 @@ func HandleImageCollection(w http.ResponseWriter, r *http.Request) {
 	  TODO:
 	  Create a database pool. Opening up a new connection is expensive
 	*/
-	database, err := internal.CreateDb("db_config.json")
-	if err != nil {
-		/*
-		   TODO:
-		   handle errors properly.
-		*/
-		panic(err)
-	}
+  dbUri := os.Getenv("POSTGRE_URI")
+  database, err := databaseHandler.Connect(dbUri)
+  if err != nil {
+    /*
+      TODO:
+      handle errors properly
+    */
+    panic(err)
+  }
 	defer database.Conn.Close()
 
 	data, err := getData(database)
